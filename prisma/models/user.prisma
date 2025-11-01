@@ -1,27 +1,27 @@
 model User {
-  id              String            @id @default(uuid())
-  name            String            @db.VarChar(100)
-  username        String            @unique @db.VarChar(32)
-  email           String            @unique @db.VarChar(255)
-  emailVerified   DateTime?
-  password        String            @db.VarChar(255)
-  image           String?           @db.VarChar(255)
-  
+  id            String    @id @default(uuid())
+  name          String    @db.VarChar(100)
+  username      String    @unique @db.VarChar(32)
+  email         String    @unique @db.VarChar(255)
+  emailVerified DateTime?
+  password      String    @db.VarChar(255)
+  image         String?   @db.VarChar(255)
+
   // User preferences & settings
-  timezone        String?           @default("UTC") @db.VarChar(50)
-  language        String?           @default("en") @db.VarChar(10)
-  theme           String?           @default("light") @db.VarChar(20)
-  settings        Json?             // Store additional user preferences
-  
+  timezone String? @default("UTC") @db.VarChar(50)
+  language String? @default("en") @db.VarChar(10)
+  theme    String? @default("light") @db.VarChar(20)
+  settings Json? // Store additional user preferences
+
   // Security & authentication
-  twoFactorEnabled Boolean          @default(false)
+  twoFactorEnabled Boolean @default(false)
   twoFactorSecret  String?
-  
+
   // Account status
-  isActive        Boolean           @default(true)
-  lastLoginAt     DateTime?
-  
-  accounts Account[]
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+
+  accounts        Account[]
   passwordHistory PasswordHistory[]
 
   createdAt DateTime @default(now())
