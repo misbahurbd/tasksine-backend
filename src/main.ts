@@ -1,11 +1,11 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { RedisStore } from 'connect-redis';
-import session from 'express-session';
+import * as session from 'express-session';
 import * as passport from 'passport';
-import { createClient } from 'redis';
 import { AppModule } from './app.module';
+import { createClient } from 'redis';
+import { RedisStore } from 'connect-redis';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -41,7 +41,7 @@ async function bootstrap() {
       store: new RedisStore({ client: redisClient, prefix: 'auth:' }),
       secret:
         process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
-      resave: true,
+      resave: false,
       saveUninitialized: false,
       cookie: {
         secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
@@ -49,7 +49,7 @@ async function bootstrap() {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         sameSite: 'lax',
       },
-      name: 'sessionId',
+      name: 'session',
     }),
   );
 

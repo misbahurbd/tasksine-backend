@@ -9,7 +9,7 @@ model User {
   username      String    @unique @db.VarChar(32)
   email         String    @unique @db.VarChar(255)
   emailVerified DateTime?
-  password      String    @db.VarChar(255)
+  password      String?   @db.VarChar(255)
   image         String?   @db.VarChar(255)
 
   // Account status & security
@@ -26,6 +26,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([email, username])
   @@index([email])
   @@index([username])
   @@index([isActive])
