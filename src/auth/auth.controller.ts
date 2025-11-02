@@ -7,14 +7,20 @@ import {
   Request as ReqDecorator,
   UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
 import { Request } from 'express';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -23,16 +29,24 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiCreatedResponse({ type: RegisterResponseDto })
-  async register(
-    @Body() registerDto: RegisterDto,
-  ): Promise<RegisterResponseDto> {
-    return this.authService.register(registerDto);
+  async register(@Body() registerDto: RegisterDto) {
+    const result = await this.authService.register(registerDto);
+
+    return {
+      message: 'User registered successfully',
+      data: result,
+    };
   }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login user' })
+  @ApiOkResponse({ type: LoginResponseDto })
   login(@ReqDecorator() req: Request) {
-    return req.user;
+    return {
+      message: 'User login successfully',
+      data: req.user,
+    };
   }
 }

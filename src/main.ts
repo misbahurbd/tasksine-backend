@@ -6,6 +6,8 @@ import * as passport from 'passport';
 import { AppModule } from './app.module';
 import { createClient } from 'redis';
 import { RedisStore } from 'connect-redis';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +23,12 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Enable global response interceptor for standardized success responses
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  // Enable global exception filter for standardized error responses
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Configure Redis client for session store
   const redisClient = createClient({
