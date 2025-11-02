@@ -1,34 +1,35 @@
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String    @db.VarChar(100)
   username      String    @unique @db.VarChar(32)
   email         String    @unique @db.VarChar(255)
   emailVerified DateTime?
-  password      String    @db.VarChar(255)
+  password      String?   @db.VarChar(255)
   image         String?   @db.VarChar(255)
 
-  // User preferences & settings
-  timezone String? @default("UTC") @db.VarChar(50)
-  language String? @default("en") @db.VarChar(10)
-  theme    String? @default("light") @db.VarChar(20)
-  settings Json? // Store additional user preferences
+  // Account status & security
+  isActive         Boolean   @default(true)
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret  String?   @db.VarChar(32)
+  lastLoginAt      DateTime?
 
-  // Security & authentication
-  twoFactorEnabled Boolean @default(false)
-  twoFactorSecret  String?
-
-  // Account status
-  isActive    Boolean   @default(true)
-  lastLoginAt DateTime?
-
-  accounts        Account[]
-  passwordHistory PasswordHistory[]
+  accounts           Account[]
+  passwordHistory    PasswordHistory[]
+  verificationTokens VerificationToken[]
+  preferences        UserPreferences?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([email, username])
   @@index([email])
   @@index([username])
+  @@index([isActive])
   @@map("users")
 }
 
@@ -41,28 +42,100 @@ model PasswordHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, createdAt])
   @@map("password_histories")
 }
 
 model Account {
+  id                String  @id @default(uuid())
   userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  type              String  @db.VarChar(50)
+  provider          String  @db.VarChar(50)
+  providerAccountId String  @db.VarChar(255)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  token_type        String? @db.VarChar(50)
+  scope             String? @db.Text
+  id_token          String? @db.Text
+  session_state     String? @db.VarChar(500)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([provider])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  id        String                @id @default(uuid())
+  userId    String
+  token     String                @unique @db.VarChar(255)
+  type      VerificationTokenType
+  expiresAt DateTime
+  used      Boolean               @default(false)
+  usedAt    DateTime?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([provider, providerAccountId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
   @@index([userId])
-  @@map("accounts")
+  @@index([type])
+  @@index([userId, type])
+  @@map("verification_tokens")
+}
+
+model UserPreferences {
+  id       String @id @default(uuid())
+  userId   String @unique
+  timezone String @default("UTC") @db.VarChar(50)
+  language String @default("en") @db.VarChar(10)
+  theme    String @default("light") @db.VarChar(20)
+  settings Json?
+
+  // Employee Management & Time Tracking Preferences
+  defaultWorkHours       Int     @default(8) // Default hours per day
+  workWeekStartDay       Int     @default(1) // Monday = 1, Sunday = 0
+  workWeekEndDay         Int     @default(5) // Friday = 5
+  workingDaysPerWeek     Int     @default(5)
+  overtimeThreshold      Int     @default(40) // Hours per week before overtime
+  autoClockOut           Boolean @default(false)
+  lunchDurationMinutes   Int     @default(60)
+  breakDurationMinutes   Int     @default(15)
+  requireClockOut        Boolean @default(true)
+  requireNotesOnClockOut Boolean @default(false)
+  allowLateClockIn       Boolean @default(false)
+  lateClockInTolerance   Int     @default(15) // Minutes
+  autoPauseBreaks        Boolean @default(true)
+  remindersEnabled       Boolean @default(true)
+  reminderBeforeClockOut Int     @default(15) // Minutes before shift end
+
+  // Notification Preferences
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(false)
+  pushNotifications  Boolean @default(true)
+  weeklyReportEmails Boolean @default(true)
+  overtimeAlerts     Boolean @default(true)
+
+  // Display Preferences
+  dateFormat   String  @default("MM/DD/YYYY") @db.VarChar(50)
+  timeFormat   String  @default("12h") @db.VarChar(10) // 12h or 24h
+  weekStartOn  String  @default("monday") @db.VarChar(20)
+  showWeekends Boolean @default(false)
+  showHolidays Boolean @default(true)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
 }
