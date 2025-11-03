@@ -10,7 +10,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
@@ -22,7 +22,6 @@ import { GitHubAuthGuard } from './guards/github-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { OAuthProfile } from 'src/user/interfaces/oAuth-profile.interface';
 import {
-  ApiOAuthCallback,
   ApiOAuthInit,
   ApiPostOperation,
 } from 'src/common/decorators/swagger.decorators';
@@ -83,7 +82,7 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  @ApiOAuthCallback('google')
+  @ApiExcludeEndpoint()
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const frontendUrl = this.configService.getOrThrow<string>('CLIENT_ORIGIN');
 
@@ -139,7 +138,7 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(GitHubAuthGuard)
-  @ApiOAuthCallback('github')
+  @ApiExcludeEndpoint()
   async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
     const frontendUrl = this.configService.getOrThrow<string>('CLIENT_ORIGIN');
 
