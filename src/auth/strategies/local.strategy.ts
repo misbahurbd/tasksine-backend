@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-local';
@@ -6,6 +6,8 @@ import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(LocalStrategy.name);
+
   constructor(private readonly userService: UserService) {
     super({
       usernameField: 'username',
@@ -35,17 +37,24 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       );
 
       if (!user) {
+        this.logger.warn(
+          `Authentication failed for username: ${username}${metadata?.ipAddress ? ` from IP: ${metadata.ipAddress}` : ''}`,
+        );
         throw new UnauthorizedException('Invalid username or password');
       }
 
       return user;
     } catch (error: unknown) {
-      console.log(error);
       // Re-throw UnauthorizedException if account is deactivated or locked
       if (error instanceof UnauthorizedException) {
         throw error;
       }
 
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(
+        `Unexpected error during authentication for username: ${username} - ${err.message}`,
+        err.stack,
+      );
       throw new UnauthorizedException('Invalid username or password');
     }
   }
