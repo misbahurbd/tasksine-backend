@@ -108,6 +108,12 @@ export class UserService {
     });
 
     if (account) {
+      if (account.user.isActive) {
+        throw new UnauthorizedException(
+          'Your account has been deactivated. Please contact support.',
+        );
+      }
+
       // Update account tokens if provided
       await this.prisma.account.update({
         where: {
